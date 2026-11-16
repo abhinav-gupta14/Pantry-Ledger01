@@ -1,0 +1,209 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum RoleName {
+  OWNER
+  ADMIN
+  MANAGER
+  STOREKEEPER
+  KITCHEN_STAFF
+}
+
+enum StockMovementType {
+  RECEIVED
+  CONSUMED
+  WASTED
+  ADJUSTED
+  RETURNED
+  TRANSFERRED
+}
+
+enum OrderStatus {
+  PENDING
+  APPROVED
+  DISPATCHED
+  PARTIALLY_RECEIVED
+  COMPLETED
+  CANCELLED
+}
+
+enum SupplierStatus {
+  ACTIVE
+  INACTIVE
+  BLOCKED
+}
+
+enum RecipeStatus {
+  ACTIVE
+  ARCHIVED
+}
+
+model Restaurant {
+  id               String            @id @default(cuid())
+  name             String
+  slug             String            @unique
+  address          String?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  users            User[]
+  categories       Category[]
+  inventory        InventoryItem[]
+  suppliers        Supplier[]
+  purchaseOrders   PurchaseOrder[]
+  recipes          Recipe[]
+  stockMovements   StockMovement[]
+}
+
+model User {
+  id               String            @id @default(cuid())
+  name             String
+  email            String            @unique
+  password         String
+  role             RoleName
+  restaurantId     String
+  restaurant       Restaurant        @relation(fields: [restaurantId], references: [id])
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  stockMovements   StockMovement[]
+  purchaseOrders   PurchaseOrder[]
+}
+
+model Category {
+  id               String            @id @default(cuid())
+  name             String
+  restaurantId     String
+  restaurant       Restaurant        @relation(fields: [restaurantId], references: [id])
+  inventory        InventoryItem[]
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  @@unique([restaurantId, name])
+}
+
+model Supplier {
+  id                 String            @id @default(cuid())
+  name               String
+  contactPerson      String?
+  phone              String?
+  email              String?
+  address            String?
+  productsSupplied   String?
+  paymentTerms       String?
+  status             SupplierStatus    @default(ACTIVE)
+  restaurantId      String
+  restaurant        Restaurant        @relation(fields: [restaurantId], references: [id])
+  inventory          InventoryItem[]
+  purchaseOrders     PurchaseOrder[]
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+}
+
+model InventoryItem {
+  id               String            @id @default(cuid())
+  itemId           String            @unique
+  name             String
+  description      String?
+  categoryId       String?
+  category         Category?         @relation(fields: [categoryId], references: [id])
+  quantity         Float             @default(0)
+  unit             String
+  minimumStock     Float             @default(0)
+  reorderQuantity  Float             @default(0)
+  maxStockLevel    Float             @default(0)
+  purchasePrice    Float?
+  supplierId       String?
+  supplier         Supplier?         @relation(fields: [supplierId], references: [id])
+  storageLocation  String?
+  restaurantId     String
+  restaurant       Restaurant        @relation(fields: [restaurantId], references: [id])
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  stockMovements   StockMovement[]
+  recipeIngredients RecipeIngredient[]
+  purchaseOrderItems PurchaseOrderItem[]
+
+  @@unique([restaurantId, itemId])
+}
+
+model StockMovement {
+  id            String             @id @default(cuid())
+  itemId        String
+  item          InventoryItem      @relation(fields: [itemId], references: [id])
+  restaurantId  String
+  restaurant    Restaurant         @relation(fields: [restaurantId], references: [id])
+  movementType  StockMovementType
+  quantity      Float
+  previousStock Float
+  updatedStock  Float
+  reason        String?
+  userId        String?
+  user          User?              @relation(fields: [userId], references: [id])
+  createdAt     DateTime           @default(now())
+
+  @@index([itemId, createdAt])
+}
+
+model PurchaseOrder {
+  id            String            @id @default(cuid())
+  orderNumber   String            @unique
+  restaurantId  String
+  restaurant    Restaurant        @relation(fields: [restaurantId], references: [id])
+  supplierId    String?
+  supplier      Supplier?         @relation(fields: [supplierId], references: [id])
+  status        OrderStatus       @default(PENDING)
+  remarks       String?
+  totalAmount   Float             @default(0)
+  createdById   String?
+  createdBy     User?             @relation(fields: [createdById], references: [id])
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+  items         PurchaseOrderItem[]
+}
+
+model PurchaseOrderItem {
+  id                  String        @id @default(cuid())
+  purchaseOrderId     String
+  purchaseOrder       PurchaseOrder @relation(fields: [purchaseOrderId], references: [id])
+  itemId              String
+  item                InventoryItem @relation(fields: [itemId], references: [id])
+  quantity            Float
+  unitPrice           Float
+  receivedQuantity    Float         @default(0)
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+}
+
+model Recipe {
+  id            String            @id @default(cuid())
+  name          String
+  description   String?
+  status        RecipeStatus      @default(ACTIVE)
+  restaurantId  String
+  restaurant    Restaurant        @relation(fields: [restaurantId], references: [id])
+  ingredients   RecipeIngredient[]
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  @@unique([restaurantId, name])
+}
+
+model RecipeIngredient {
+  id          String        @id @default(cuid())
+  recipeId    String
+  recipe      Recipe        @relation(fields: [recipeId], references: [id])
+  itemId      String
+  item        InventoryItem @relation(fields: [itemId], references: [id])
+  quantity    Float
+  unit        String
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@unique([recipeId, itemId])
+}

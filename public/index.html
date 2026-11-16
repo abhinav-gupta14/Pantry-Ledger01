@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pantry ledger – restaurant stock</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700&family=Public+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <dialog id="loginDialog" aria-labelledby="loginTitle">
+    <form id="loginForm">
+      <h3 id="loginTitle">Sign in to Pantry Ledger</h3>
+      <p id="loginError" class="form-error" role="alert" hidden></p>
+      <label>Email <input id="loginEmail" type="email" autocomplete="username" required></label>
+      <label>Password <input id="loginPassword" type="password" autocomplete="current-password" required></label>
+      <button class="btn primary" id="loginSubmit" type="submit">Sign in</button>
+    </form>
+  </dialog>
+
+  <div class="app">
+    <aside class="sections" aria-label="Stock sections">
+      <h1>Pantry ledger</h1>
+      <nav id="sectionList"></nav>
+    </aside>
+
+    <main>
+      <header class="topbar">
+        <input id="search" type="search" placeholder="Search items, e.g. turmeric" aria-label="Search items">
+        <button class="btn primary" id="addBtn">Add item</button>
+      </header>
+
+      <section class="summary" id="summary" aria-live="polite"></section>
+
+      <h2 id="sectionTitle">All items</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Item</th><th>Stock level</th><th>Quantity</th><th>Status</th><th></th></tr>
+          </thead>
+          <tbody id="rows"></tbody>
+        </table>
+        <p class="empty" id="empty" hidden>No items found. Add one or change your search.</p>
+      </div>
+    </main>
+  </div>
+
+  <dialog id="itemDialog">
+    <form id="itemForm" method="dialog">
+      <h3 id="dialogTitle">Add item</h3>
+      <input type="hidden" id="itemId">
+      <label>Name <input id="fName" required></label>
+      <label>Section <select id="fCategory" required></select></label>
+      <div class="two">
+        <label>Quantity <input id="fQty" type="number" min="0" step="any" required></label>
+        <label>Unit <input id="fUnit" placeholder="kg, pcs, L" required></label>
+      </div>
+      <label>Reorder when stock falls to <input id="fMin" type="number" min="0" step="any" required></label>
+      <div class="actions">
+        <button type="button" class="btn" id="cancelBtn">Cancel</button>
+        <button type="submit" class="btn primary">Save item</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="/script.js"></script>
+</body>
+</html>
